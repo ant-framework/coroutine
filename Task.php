@@ -66,7 +66,7 @@ class Task
         while($this->signal !== Signal::TASK_DONE) {
             try {
                 $signal = $this->scheduler->schedule();
-                if(Signal::isSignal($signal)) {
+                if (Signal::isSignal($signal)) {
                     $this->signal = $signal;
                     switch ($this->signal) {
                         case Signal::TASK_CONTINUE:
@@ -79,7 +79,7 @@ class Task
                             break;
                     }
                 }
-            } catch(\Exception $e) {
+            } catch (\Exception $e) {
                 $this->scheduler->throwException($e);
             }
         }
@@ -95,7 +95,7 @@ class Task
         while($this->signal !== Signal::TASK_DONE) {
             try{
                 $signal = $this->scheduler->schedule();
-                if(Signal::isSignal($signal)) {
+                if (Signal::isSignal($signal)) {
                     $this->signal = $signal;
                     switch ($this->signal) {
                         case Signal::TASK_CONTINUE:
@@ -109,7 +109,7 @@ class Task
                             break;
                     }
                 }
-            }catch(\Exception $e){
+            } catch (\Exception $e){
                 $this->scheduler->throwException($e);
             }
         }
