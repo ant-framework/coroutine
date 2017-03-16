@@ -1,47 +1,47 @@
 # Co stack
-因为PHP7以下不支持协程堆栈,所以用原生PHP实现了一遍协程堆栈
+基于ReactPHP的携程堆栈模块,以同步的方式书写异步代码
 
 ### 演示
 ```php
 include "vendor/autoload.php";
 
-function foo()
-{
-    yield 1;
-    yield 2;
-    yield 3;
-    yield 4;
-    yield 5;
+$loop = React\EventLoop\Factory::create();
 
-    try{
-        yield bar();
-    }catch(\Exception $e) {
-        yield $e->getMessage();
-    }
+// 监听8000端口
+$socket = stream_socket_server("tcp://0.0.0.0:8000", $errorCode, $errorMessage, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
+// 设置非阻塞
+stream_set_blocking($socket, false);
 
-    $stack = function(){
-        yield 11;
-        yield 12;
-        yield 13;
-        yield 14;
-    };
+$loop->addReadStream($socket, function ($stream, $loop) {
+    $coroutine = call_user_func(function () use ($stream, $loop) {
+        $clientSocket = @stream_socket_accept($stream);
+        stream_set_blocking($clientSocket, false);
 
-    yield $stack();
-    yield 15;
-}
+        // 切换上下文,当流可读的时候切换回当前上下文
+        yield \Ant\Coroutine\SysCall::waitForRead($clientSocket);
 
-function bar()
-{
-    yield 6;
-    yield 7;
-    yield 8;
-    yield 9;
-    throw new Exception(10);
-}
+        echo fread($clientSocket, 8192);
 
-$task = new \Ant\Coroutine\Task(foo());
+        // 切换上下文,当流可写的时候切换回当前上下文
+        yield \Ant\Coroutine\SysCall::waitForWrite($clientSocket);
 
-foreach ($task->each() as $key => $value) {
-    echo $value,PHP_EOL;
-}
+        // 沉睡1秒钟
+        yield \Ant\Coroutine\SysCall::sleep(1);
+
+        fwrite($clientSocket, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+        fclose($clientSocket);
+        $loop->removeStream($clientSocket);
+    });
+
+    $task = new \Ant\Coroutine\Task($coroutine, $loop);
+    $task->run();
+});
+
+$loop->addPeriodicTimer(5, function () {
+    $memory = memory_get_usage() / 1024;
+    $formatted = number_format($memory, 3).'K';
+    echo "Current memory usage: {$formatted}\n";
+});
+
+$loop->run();
 ```

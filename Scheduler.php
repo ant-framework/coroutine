@@ -40,24 +40,23 @@ class Scheduler
 
         $yieldValue = $this->handleYieldValue($coroutine);
 
-        if($yieldValue instanceof SysCall) {
-            return call_user_func($yieldValue,$this->task);
+        if ($yieldValue instanceof SysCall) {
+            return call_user_func($yieldValue, $this->task);
         }
 
         // Todo 异步任务
 
-        if($coroutine->valid()) {
+        if ($coroutine->valid()) {
             // 当前协程还未完成,继续任务
             return Signal::TASK_CONTINUE;
         }
 
-        if(!$this->stack->isEmpty()) {
+        if (!$this->stack->isEmpty()) {
             // 将协程函数依次出栈
             $this->task->setCoroutine($this->stack->pop());
             $this->task->reenter();
             return Signal::TASK_RUNNING;
         }
-
 
         return Signal::TASK_DONE;
     }
@@ -69,15 +68,15 @@ class Scheduler
      */
     public function throwException(\Exception $exception)
     {
-        if($this->stack->isEmpty()) {
+        if ($this->stack->isEmpty()) {
             $this->task->sendException($exception);
             return;
         }
 
-        try{
+        try {
             $this->task->setCoroutine($this->stack->pop());
             $this->task->sendException($exception);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             $this->throwException($e);
         }
     }

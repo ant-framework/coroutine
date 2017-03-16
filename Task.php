@@ -1,5 +1,6 @@
 <?php
 namespace Ant\Coroutine;
+use React\EventLoop\LoopInterface;
 
 /**
  * 协程堆栈
@@ -22,6 +23,11 @@ class Task
      * @var \Generator
      */
     protected $coroutine;
+
+    /**
+     * @var LoopInterface
+     */
+    protected $loop;
 
     /**
      * 重入参数
@@ -49,9 +55,10 @@ class Task
      * @param \Generator $coroutine
      * @param int $taskId
      */
-    public function __construct(\Generator $coroutine, $taskId = 0)
+    public function __construct(\Generator $coroutine, LoopInterface $loop, $taskId = 0)
     {
         $this->coroutine = $coroutine;
+        $this->loop = $loop;
         $this->taskId = $taskId;
         $this->scheduler = new Scheduler($this);
     }
@@ -63,10 +70,10 @@ class Task
      */
     public function run()
     {
-        while($this->signal !== Signal::TASK_DONE) {
+        while ($this->signal !== Signal::TASK_DONE) {
             try {
                 $signal = $this->scheduler->schedule();
-                if(Signal::isSignal($signal)) {
+                if (Signal::isSignal($signal)) {
                     $this->signal = $signal;
                     switch ($this->signal) {
                         case Signal::TASK_CONTINUE:
@@ -79,37 +86,7 @@ class Task
                             break;
                     }
                 }
-            } catch(\Exception $e) {
-                $this->scheduler->throwException($e);
-            }
-        }
-    }
-
-    /**
-     * 遍历,手动遍历
-     *
-     * @return \Generator
-     */
-    public function each()
-    {
-        while($this->signal !== Signal::TASK_DONE) {
-            try{
-                $signal = $this->scheduler->schedule();
-                if(Signal::isSignal($signal)) {
-                    $this->signal = $signal;
-                    switch ($this->signal) {
-                        case Signal::TASK_CONTINUE:
-                            yield $this->coroutine->key() => $this->coroutine->current();
-                            $this->reenter();
-                            break;
-                        case Signal::TASK_SLEEP:
-                        case Signal::TASK_KILLED:
-                        case Signal::TASK_WAIT:
-                            return null;
-                            break;
-                    }
-                }
-            }catch(\Exception $e){
+            } catch (\Exception $e) {
                 $this->scheduler->throwException($e);
             }
         }
@@ -178,6 +155,14 @@ class Task
     public function getTaskId()
     {
         return $this->taskId;
+    }
+
+    /**
+     * @return LoopInterface
+     */
+    public function getLoop()
+    {
+        return $this->loop;
     }
 
     /**

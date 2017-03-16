@@ -1,6 +1,6 @@
 {
   "require": {
-    "ant-framework/middleware":"^0.1.0"
+    "react/event-loop": "0.4.*"
   },
   "autoload": {
     "psr-4": {
