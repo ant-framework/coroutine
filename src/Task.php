@@ -1,8 +1,11 @@
 <?php
 namespace Ant\Coroutine;
+
 use React\EventLoop\LoopInterface;
 
 /**
+ * Todo: 单元测试
+ *
  * 协程堆栈
  *
  * Class Task
@@ -52,11 +55,19 @@ class Task
 
     /**
      * Task constructor.
-     * @param \Generator $coroutine
+     * @param $coroutine
      * @param int $taskId
      */
-    public function __construct(\Generator $coroutine, LoopInterface $loop, $taskId = 0)
+    public function __construct($coroutine, LoopInterface $loop, $taskId = 0)
     {
+        if (is_callable($coroutine)) {
+            $coroutine = call_user_func($coroutine);
+        }
+
+        if (!$coroutine instanceof \Generator) {
+            throw new \RuntimeException('$coroutine must be Generator object');
+        }
+
         $this->coroutine = $coroutine;
         $this->loop = $loop;
         $this->taskId = $taskId;

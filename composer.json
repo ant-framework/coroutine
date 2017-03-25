@@ -4,7 +4,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Ant\\Coroutine\\": "./"
+      "Ant\\Coroutine\\": "./src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
     }
   }
 }

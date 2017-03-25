@@ -13,7 +13,7 @@ $socket = stream_socket_server("tcp://0.0.0.0:8000", $errorCode, $errorMessage, 
 stream_set_blocking($socket, false);
 
 $loop->addReadStream($socket, function ($stream, $loop) {
-    $coroutine = call_user_func(function () use ($stream, $loop) {
+    $task = new \Ant\Coroutine\Task(function () use ($stream, $loop) {
         $clientSocket = @stream_socket_accept($stream);
         stream_set_blocking($clientSocket, false);
 
@@ -31,9 +31,8 @@ $loop->addReadStream($socket, function ($stream, $loop) {
         fwrite($clientSocket, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
         fclose($clientSocket);
         $loop->removeStream($clientSocket);
-    });
+    }, $loop);
 
-    $task = new \Ant\Coroutine\Task($coroutine, $loop);
     $task->run();
 });
 

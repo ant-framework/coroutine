@@ -5,6 +5,8 @@ use SplStack;
 use React\SocketClient\ConnectorInterface;
 
 /**
+ * 协程调度器
+ *
  * Class Scheduler
  * @package Ant\Coroutine
  */

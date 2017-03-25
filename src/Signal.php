@@ -1,7 +1,12 @@
 <?php
 namespace Ant\Coroutine;
 
-
+/**
+ * 信号
+ *
+ * Class Signal
+ * @package Ant\Coroutine
+ */
 class Signal
 {
     // 沉睡一段时间
