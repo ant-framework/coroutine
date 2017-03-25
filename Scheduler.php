@@ -2,6 +2,7 @@
 namespace Ant\Coroutine;
 
 use SplStack;
+use React\SocketClient\ConnectorInterface;
 
 /**
  * Class Scheduler
@@ -41,10 +42,8 @@ class Scheduler
         $yieldValue = $this->handleYieldValue($coroutine);
 
         if ($yieldValue instanceof SysCall) {
-            return call_user_func($yieldValue,$this->task);
+            return call_user_func($yieldValue, $this->task);
         }
-
-        // Todo 异步任务
 
         if ($coroutine->valid()) {
             // 当前协程还未完成,继续任务
@@ -57,7 +56,6 @@ class Scheduler
             $this->task->reenter();
             return Signal::TASK_RUNNING;
         }
-
 
         return Signal::TASK_DONE;
     }
