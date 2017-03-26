@@ -2,7 +2,6 @@
 namespace Ant\Coroutine;
 
 use SplStack;
-use React\SocketClient\ConnectorInterface;
 
 /**
  * 协程调度器

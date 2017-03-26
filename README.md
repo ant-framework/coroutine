@@ -19,21 +19,26 @@ $socket = stream_socket_server(
 stream_set_blocking($socket, false);
 
 // 等待新连接到来
-$loop->addReadStream($socket, function ($stream, LoopInterface $loop) {
+$loop->addReadStream($socket, function ($stream, $loop) {
     $newStream = @stream_socket_accept($stream);
     stream_set_blocking($newStream, false);
-	// 等待新连接可读
-    $loop->addReadStream($newStream, function ($newStream, LoopInterface $loop) {
+    // 等待新连接可读
+    $loop->addReadStream($newStream, function ($newStream, $loop) {
         echo fread($newStream, 8192);
-		// 等待新连接可写
-        $loop->addWriteStream($newStream, function ($newStream, LoopInterface $loop) {
-            fwrite($newStream, "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
-            // 断开连接
-            fclose($newStream);
-            $loop->removeStream($newStream);
+        // 等待50ms后响应
+        $loop->addTimer(0.05, function () use ($loop, $newStream) {
+            // 等待新连接可写
+            $loop->addWriteStream($newStream, function ($newStream, $loop) {
+                fwrite($newStream, "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+                // 断开连接
+                fclose($newStream);
+                $loop->removeStream($newStream);
+            });
         });
     });
 });
+
+$loop->run();
 ```
 ### 使用Coroutine
 
@@ -42,7 +47,7 @@ $loop->addReadStream($socket, function ($stream, LoopInterface $loop) {
 ```php
 include "vendor/autoload.php";
 
-$loop = GlobalLoop::get();
+$loop = Ant\Coroutine\GlobalLoop::get();
 // 监听并绑定8000端口
 $socket = stream_socket_server(
     "tcp://0.0.0.0:8000",
@@ -63,13 +68,15 @@ $loop->addReadStream($socket, function ($stream) {
         yield Ant\Coroutine\waitForRead($newStream);
         echo fread($newStream, 8192);
 
+        // 沉睡50ms后再响应
+        yield Ant\Coroutine\sleep(0.05);
+
         // 切换上下文,当流可写的时候切换回当前上下文
         yield Ant\Coroutine\waitForWrite($newStream);
-        fwrite($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+        fwrite($newStream, "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
 
         // 断开连接
         fclose($newStream);
-        Ant\Coroutine\removeStream($newStream);
     });
 });
 ```

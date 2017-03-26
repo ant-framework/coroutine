@@ -108,9 +108,9 @@ function waitForRead($stream)
 {
     // Todo 保证每次触发异步回调,触发的任务都不应该是同一个任务
     return new SysCall(function (Task $task) use ($stream) {
-        $task->getLoop()->addReadStream($stream, function ($stream) use ($task) {
+        addReadStream($stream, function ($stream) use ($task) {
             // IO完成后,不再触发协程上下文切换
-            $task->getLoop()->removeReadStream($stream);
+            removeReadStream($stream);
             $task->reenter();
             $task->run();
         });
@@ -128,9 +128,9 @@ function waitForRead($stream)
 function waitForWrite($stream)
 {
     return new SysCall(function (Task $task) use ($stream) {
-        $task->getLoop()->addWriteStream($stream, function ($stream) use ($task) {
+        addWriteStream($stream, function ($stream) use ($task) {
             // IO完成后,不再触发协程上下文切换
-            $task->getLoop()->removeWriteStream($stream);
+            removeWriteStream($stream);
             $task->reenter();
             $task->run();
         });
@@ -148,7 +148,8 @@ function waitForWrite($stream)
 function sleep($time)
 {
     return new SysCall(function (Task $task) use ($time) {
-        $task->getLoop()->addTimer($time, function () use ($task) {
+        addTimer($time, function () use ($task) {
+            // 继续Task,栈结构得到保存
             $task->reenter();
             $task->run();
         });
@@ -177,7 +178,7 @@ function killed()
 function getLoop()
 {
     return new SysCall(function (Task $task) {
-        $task->setReenterValue($task->getLoop());
+        $task->setReenterValue(GlobalLoop::get());
         return Signal::TASK_CONTINUE;
     });
 }

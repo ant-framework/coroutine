@@ -1,8 +1,6 @@
 <?php
 namespace Ant\Coroutine;
 
-use React\EventLoop\LoopInterface;
-
 /**
  * Todo: 单元测试
  *
@@ -26,11 +24,6 @@ class Task
      * @var \Generator
      */
     protected $coroutine;
-
-    /**
-     * @var LoopInterface
-     */
-    protected $loop;
 
     /**
      * 重入参数
@@ -59,7 +52,7 @@ class Task
      */
     public static function start($coroutine, $taskId = 0)
     {
-        (new static($coroutine, GlobalLoop::get(), $taskId))->run();
+        (new static($coroutine, $taskId))->run();
     }
 
     /**
@@ -67,7 +60,7 @@ class Task
      * @param $coroutine
      * @param int $taskId
      */
-    public function __construct($coroutine, LoopInterface $loop, $taskId = 0)
+    public function __construct($coroutine, $taskId = 0)
     {
         if (is_callable($coroutine)) {
             $coroutine = call_user_func($coroutine);
@@ -78,7 +71,6 @@ class Task
         }
 
         $this->coroutine = $coroutine;
-        $this->loop = $loop;
         $this->taskId = $taskId;
         $this->scheduler = new Scheduler($this);
     }
@@ -175,14 +167,6 @@ class Task
     public function getTaskId()
     {
         return $this->taskId;
-    }
-
-    /**
-     * @return LoopInterface
-     */
-    public function getLoop()
-    {
-        return $this->loop;
     }
 
     /**
