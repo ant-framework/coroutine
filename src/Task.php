@@ -54,6 +54,15 @@ class Task
     protected $signal = 0;
 
     /**
+     * @param $coroutine
+     * @param int $taskId
+     */
+    public static function start($coroutine, $taskId = 0)
+    {
+        (new static($coroutine, GlobalLoop::get(), $taskId))->run();
+    }
+
+    /**
      * Task constructor.
      * @param $coroutine
      * @param int $taskId

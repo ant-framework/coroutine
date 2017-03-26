@@ -5,15 +5,15 @@
 ```php
 include "vendor/autoload.php";
 
-$loop = React\EventLoop\Factory::create();
+$loop = \Ant\Coroutine\GlobalLoop::get();
 
-// 监听8000端口
+// 监听并绑定8000端口
 $socket = stream_socket_server("tcp://0.0.0.0:8000", $errorCode, $errorMessage, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
 // 设置非阻塞
 stream_set_blocking($socket, false);
 
 $loop->addReadStream($socket, function ($stream, $loop) {
-    $task = new \Ant\Coroutine\Task(function () use ($stream, $loop) {
+    \Ant\Coroutine\Task::start(function () use ($stream, $loop) {
         $clientSocket = @stream_socket_accept($stream);
         stream_set_blocking($clientSocket, false);
 
@@ -25,15 +25,12 @@ $loop->addReadStream($socket, function ($stream, $loop) {
         // 切换上下文,当流可写的时候切换回当前上下文
         yield \Ant\Coroutine\SysCall::waitForWrite($clientSocket);
 
-        // 沉睡1秒钟
-        yield \Ant\Coroutine\SysCall::sleep(1);
-
         fwrite($clientSocket, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
-        fclose($clientSocket);
-        $loop->removeStream($clientSocket);
-    }, $loop);
 
-    $task->run();
+        // 断开连接
+        fclose($clientSocket);
+        \Ant\Coroutine\GlobalLoop::get()->removeStream($clientSocket);
+    });
 });
 
 $loop->addPeriodicTimer(5, function () {
@@ -41,6 +38,4 @@ $loop->addPeriodicTimer(5, function () {
     $formatted = number_format($memory, 3).'K';
     echo "Current memory usage: {$formatted}\n";
 });
-
-$loop->run();
 ```

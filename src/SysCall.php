@@ -1,7 +1,6 @@
 <?php
 namespace Ant\Coroutine;
 
-
 /**
  * 系统回调
  *
@@ -37,6 +36,7 @@ class SysCall
      */
     public static function waitForRead($stream)
     {
+        // Todo 保证每次触发异步回调,触发的任务都不应该是同一个任务
         return new SysCall(function (Task $task) use ($stream) {
             $task->getLoop()->addReadStream($stream, function ($stream) use ($task) {
                 $task->setReenterValue($stream);
