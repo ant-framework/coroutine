@@ -11,7 +11,7 @@
          bootstrap="vendor/autoload.php"
         >
     <testsuites>
-        <testsuite name="Http module test">
+        <testsuite name="coroutine test">
             <directory>./Tests/</directory>
         </testsuite>
     </testsuites>
