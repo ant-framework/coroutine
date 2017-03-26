@@ -97,3 +97,100 @@ function removeStream($stream)
 {
     GlobalLoop::get()->removeStream($stream);
 }
+
+/**
+ * 等待到流可读
+ *
+ * @param resource $stream
+ * @return SysCall
+ */
+function waitForRead($stream)
+{
+    // Todo 保证每次触发异步回调,触发的任务都不应该是同一个任务
+    return new SysCall(function (Task $task) use ($stream) {
+        $task->getLoop()->addReadStream($stream, function ($stream) use ($task) {
+            // IO完成后,不再触发协程上下文切换
+            $task->getLoop()->removeReadStream($stream);
+            $task->reenter();
+            $task->run();
+        });
+
+        return Signal::TASK_WAIT;
+    });
+}
+
+/**
+ * 等待到流可写
+ *
+ * @param $stream
+ * @return SysCall
+ */
+function waitForWrite($stream)
+{
+    return new SysCall(function (Task $task) use ($stream) {
+        $task->getLoop()->addWriteStream($stream, function ($stream) use ($task) {
+            // IO完成后,不再触发协程上下文切换
+            $task->getLoop()->removeWriteStream($stream);
+            $task->reenter();
+            $task->run();
+        });
+
+        return Signal::TASK_WAIT;
+    });
+}
+
+/**
+ * 沉睡指定时间
+ *
+ * @param int|double $time
+ * @return SysCall
+ */
+function sleep($time)
+{
+    return new SysCall(function (Task $task) use ($time) {
+        $task->getLoop()->addTimer($time, function () use ($task) {
+            $task->reenter();
+            $task->run();
+        });
+
+        return Signal::TASK_SLEEP;
+    });
+}
+
+/**
+ * 结束任务
+ *
+ * @return SysCall
+ */
+function killed()
+{
+    return new SysCall(function () {
+        return Signal::TASK_KILLED;
+    });
+}
+
+/**
+ * 获取Loop
+ *
+ * @return SysCall
+ */
+function getLoop()
+{
+    return new SysCall(function (Task $task) {
+        $task->setReenterValue($task->getLoop());
+        return Signal::TASK_CONTINUE;
+    });
+}
+
+/**
+ * 获取Task
+ *
+ * @return SysCall
+ */
+function getTask()
+{
+    return new SysCall(function (Task $task) {
+        $task->setReenterValue($task);
+        return Signal::TASK_CONTINUE;
+    });
+}
