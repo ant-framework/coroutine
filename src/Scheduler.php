@@ -64,12 +64,12 @@ class Scheduler
     }
 
     /**
-     * 抛出异常
+     * 捕获异常
      *
      * @param \Exception $exception
      * @throws \Exception
      */
-    public function throwException(\Exception $exception)
+    public function tryCatch(\Exception $exception)
     {
         // 如果已是最后一层栈时,不去再去捕获异常
         if ($this->stack->isEmpty()) {
@@ -77,10 +77,11 @@ class Scheduler
         }
 
         try {
-            $this->task->setCoroutine($this->stack->pop());
-            $this->task->sendException($exception);
+            $coroutine = $this->stack->pop();
+            $coroutine->throw($exception);
+            $this->task->setCoroutine($coroutine);
         } catch (\Exception $e) {
-            $this->throwException($e);
+            $this->tryCatch($e);
         }
     }
 

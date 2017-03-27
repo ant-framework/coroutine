@@ -14,17 +14,17 @@ use React\EventLoop\Timer\TimerInterface;
  * Class GlobalLoop
  * @package Ant\Coroutine
  *
- * @method TimerInterface addTimer($interval, callable $callback)
- * @method TimerInterface addPeriodicTimer($interval, callable $callback)
- * @method bool isTimerActive(Timer $timer)
- * @method cancelTimer(Timer $timer)
- * @method futureTick(callable $callback)
- * @method nextTick(callable $callback)
- * @method addReadStream($stream, callable $listener)
- * @method addWriteStream($stream, callable $listener)
- * @method removeStream($stream)
- * @method removeReadStream($stream, callable $listener)
- * @method removeWriteStream($stream, callable $listener)
+ * @method static TimerInterface addTimer($interval, callable $callback)
+ * @method static TimerInterface addPeriodicTimer($interval, callable $callback)
+ * @method static bool isTimerActive(Timer $timer)
+ * @method static cancelTimer(Timer $timer)
+ * @method static futureTick(callable $callback)
+ * @method static nextTick(callable $callback)
+ * @method static addReadStream($stream, callable $listener)
+ * @method static addWriteStream($stream, callable $listener)
+ * @method static removeStream($stream)
+ * @method static removeReadStream($stream)
+ * @method static removeWriteStream($stream)
  */
 final class GlobalLoop
 {
@@ -164,7 +164,7 @@ final class GlobalLoop
     }
 
     /**
-     * @param $method
+     * @param $name
      * @param array $arguments
      * @return mixed
      */

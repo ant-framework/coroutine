@@ -99,7 +99,7 @@ class Task
                     }
                 }
             } catch (\Exception $e) {
-                $this->scheduler->throwException($e);
+                $this->scheduler->tryCatch($e);
             }
         }
     }
@@ -133,10 +133,11 @@ class Task
 
     /**
      * @param \Exception $exception
+     * @throws \Exception
      */
-    public function sendException(\Exception $exception)
+    public function throwException(\Exception $exception)
     {
-        $this->coroutine->throw($exception);
+        $this->scheduler->tryCatch($exception);
     }
 
     /**
