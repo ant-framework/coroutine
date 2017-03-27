@@ -4,6 +4,8 @@ namespace Ant\Coroutine;
 use SplStack;
 
 /**
+ * 协程调度器
+ *
  * Class Scheduler
  * @package Ant\Coroutine
  */
@@ -43,8 +45,6 @@ class Scheduler
         if ($yieldValue instanceof SysCall) {
             return call_user_func($yieldValue, $this->task);
         }
-
-        // Todo 异步任务
 
         if ($coroutine->valid()) {
             // 当前协程还未完成,继续任务

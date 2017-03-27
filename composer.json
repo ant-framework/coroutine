@@ -5,8 +5,13 @@
   },
   "autoload": {
     "psr-4": {
-      "Ant\\Coroutine\\": "./"
+      "Ant\\Coroutine\\": "./src"
     },
-    "files": ["functions.php"]
+    "files": ["./src/Common.php"]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
   }
 }

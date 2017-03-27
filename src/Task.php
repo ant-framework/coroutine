@@ -1,8 +1,9 @@
 <?php
 namespace Ant\Coroutine;
-use React\EventLoop\LoopInterface;
 
 /**
+ * Todo: 单元测试
+ *
  * 协程堆栈
  *
  * Class Task
@@ -23,11 +24,6 @@ class Task
      * @var \Generator
      */
     protected $coroutine;
-
-    /**
-     * @var LoopInterface
-     */
-    protected $loop;
 
     /**
      * 重入参数
@@ -51,23 +47,30 @@ class Task
     protected $signal = 0;
 
     /**
-     * Task constructor.
-     * @param LoopInterface $loop
-     * @param callable|\Generator $coroutine
+     * 尝试启动协程
+     *
+     * @param $coroutine
      * @param int $taskId
      */
-    public function __construct(LoopInterface $loop, $coroutine, $taskId = 0)
+    public static function start($coroutine, $taskId = 0)
     {
         if (is_callable($coroutine)) {
             $coroutine = call_user_func($coroutine);
         }
 
-        if (!$coroutine instanceof \Generator) {
-            throw new \InvalidArgumentException;
+        if ($coroutine instanceof \Generator) {
+            (new static($coroutine, $taskId))->run();
         }
+    }
 
+    /**
+     * Task constructor.
+     * @param \Generator $coroutine
+     * @param int $taskId
+     */
+    public function __construct(\Generator $coroutine, $taskId = 0)
+    {
         $this->coroutine = $coroutine;
-        $this->loop = $loop;
         $this->taskId = $taskId;
         $this->scheduler = new Scheduler($this);
     }
@@ -164,14 +167,6 @@ class Task
     public function getTaskId()
     {
         return $this->taskId;
-    }
-
-    /**
-     * @return LoopInterface
-     */
-    public function getLoop()
-    {
-        return $this->loop;
     }
 
     /**
