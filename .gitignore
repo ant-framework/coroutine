@@ -3,3 +3,4 @@ composer.lock
 *.log
 vendor
 index.php
+test.php

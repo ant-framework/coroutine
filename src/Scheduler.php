@@ -29,6 +29,8 @@ class Scheduler
     {
         $this->task = $task;
         $this->stack = new SplStack();
+        // 加入栈
+        $this->stack->push($task->getCoroutine());
     }
 
     /**
@@ -65,12 +67,13 @@ class Scheduler
      * 抛出异常
      *
      * @param \Exception $exception
+     * @throws \Exception
      */
     public function throwException(\Exception $exception)
     {
+        // 如果已是最后一层栈时,不去再去捕获异常
         if ($this->stack->isEmpty()) {
-            $this->task->sendException($exception);
-            return;
+            throw $exception;
         }
 
         try {
@@ -91,6 +94,10 @@ class Scheduler
     {
         $yieldValue = $coroutine->current();
 
+        if (is_array($yieldValue) || $yieldValue instanceof \Iterator) {
+            $yieldValue = $this->convertToGenerator($yieldValue);
+        }
+
         if (!$yieldValue instanceof \Generator) {
             return $yieldValue;
         }
@@ -98,5 +105,18 @@ class Scheduler
         $this->stack->push($this->task->getCoroutine());
         $this->task->setCoroutine($yieldValue);
         return $this->handleYieldValue($yieldValue);
+    }
+
+    /**
+     * 转化为协程函数
+     *
+     * @param $yieldValue
+     * @return \Generator
+     */
+    protected function convertToGenerator($yieldValue)
+    {
+        foreach ($yieldValue as $value) {
+            yield $value;
+        }
     }
 }

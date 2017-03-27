@@ -29,7 +29,7 @@ $loop->addReadStream($socket, function ($stream, $loop) {
         $loop->addTimer(0.05, function () use ($loop, $newStream) {
             // 等待新连接可写
             $loop->addWriteStream($newStream, function ($newStream, $loop) {
-                fwrite($newStream, "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+                fwrite($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
                 // 断开连接
                 fclose($newStream);
                 $loop->removeStream($newStream);
@@ -47,9 +47,8 @@ $loop->run();
 ```php
 include "vendor/autoload.php";
 
-$loop = Ant\Coroutine\GlobalLoop::get();
 // 监听并绑定8000端口
-$socket = stream_socket_server(
+$serverSocket = stream_socket_server(
     "tcp://0.0.0.0:8000",
     $errorCode,
     $errorMessage,
@@ -57,26 +56,36 @@ $socket = stream_socket_server(
 );
 
 // 设置非阻塞
-stream_set_blocking($socket, false);
+stream_set_blocking($serverSocket, false);
 
-$loop->addReadStream($socket, function ($stream) {
+Ant\Coroutine\GlobalLoop::get()->addReadStream($serverSocket, function ($stream) {
     Ant\Coroutine\Task::start(function () use ($stream) {
         $newStream = @stream_socket_accept($stream);
         stream_set_blocking($newStream, false);
 
-        // 切换上下文,当流可读的时候切换回当前上下文
+        // 切换上下文,等到流可读的时候切换回当前上下文
         yield Ant\Coroutine\waitForRead($newStream);
         echo fread($newStream, 8192);
 
-        // 沉睡50ms后再响应
-        yield Ant\Coroutine\sleep(0.05);
+        // 支持数组,迭代器
+        // 沉睡150ms后,切换上下文,等到流可写的时候切换回当前上下文
+        yield [
+            Ant\Coroutine\sleep(0.05),
+            Ant\Coroutine\sleep(0.15),
+        ];
 
-        // 切换上下文,当流可写的时候切换回当前上下文
         yield Ant\Coroutine\waitForWrite($newStream);
-        fwrite($newStream, "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+        fwrite($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
 
         // 断开连接
         fclose($newStream);
     });
 });
 ```
+
+### Todo
+* Fork当前任务
+* 协程上下文,参考Koa中间件功能
+* 异步客户端 (redis, mysql, http)
+* defer,当协程完成时,触发defer(资源回收机制)
+* 保存任务上下文,每当触发事件时,clone一个进行触发

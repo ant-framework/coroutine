@@ -109,7 +109,7 @@ class Task
      */
     public function reenter()
     {
-        $this->coroutine->send($this->reenterValue);
+        $this->coroutine->send($this->getReenterValue());
         $this->reenterValue = null;
     }
 

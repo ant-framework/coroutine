@@ -106,7 +106,6 @@ function removeStream($stream)
  */
 function waitForRead($stream)
 {
-    // Todo 保证每次触发异步回调,触发的任务都不应该是同一个任务
     return new SysCall(function (Task $task) use ($stream) {
         addReadStream($stream, function ($stream) use ($task) {
             // IO完成后,不再触发协程上下文切换

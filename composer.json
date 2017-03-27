@@ -1,7 +1,7 @@
 {
   "require": {
-    "react/event-loop": "0.4.*",
-    "react/http": "*"
+    "php": ">=5.5.0",
+    "react/event-loop": "0.4.*"
   },
   "autoload": {
     "psr-4": {

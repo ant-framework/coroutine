@@ -2,7 +2,9 @@
 namespace Ant\Coroutine;
 
 use React\EventLoop\Factory;
+use React\EventLoop\Timer\Timer;
 use React\EventLoop\LoopInterface;
+use React\EventLoop\Timer\TimerInterface;
 
 /**
  * 此类是参考ReactPhp的全局类
@@ -11,6 +13,18 @@ use React\EventLoop\LoopInterface;
  *
  * Class GlobalLoop
  * @package Ant\Coroutine
+ *
+ * @method TimerInterface addTimer($interval, callable $callback)
+ * @method TimerInterface addPeriodicTimer($interval, callable $callback)
+ * @method bool isTimerActive(Timer $timer)
+ * @method cancelTimer(Timer $timer)
+ * @method futureTick(callable $callback)
+ * @method nextTick(callable $callback)
+ * @method addReadStream($stream, callable $listener)
+ * @method addWriteStream($stream, callable $listener)
+ * @method removeStream($stream)
+ * @method removeReadStream($stream, callable $listener)
+ * @method removeWriteStream($stream, callable $listener)
  */
 final class GlobalLoop
 {
@@ -147,5 +161,21 @@ final class GlobalLoop
         }
 
         return $loop;
+    }
+
+    /**
+     * @param $method
+     * @param array $arguments
+     * @return mixed
+     */
+    public static function __callStatic($name, $arguments = [])
+    {
+        $loop = static::get();
+
+        if (!method_exists($loop, $name)) {
+            throw new \BadMethodCallException("[{$name}] method not exists!");
+        }
+
+        return call_user_func_array([$loop, $name], $arguments);
     }
 }
