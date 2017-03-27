@@ -58,27 +58,26 @@ $serverSocket = stream_socket_server(
 // 设置非阻塞
 stream_set_blocking($serverSocket, false);
 
-Ant\Coroutine\GlobalLoop::get()->addReadStream($serverSocket, function ($stream) {
+Ant\Coroutine\GlobalLoop::addReadStream($serverSocket, function ($stream) {
     Ant\Coroutine\Task::start(function () use ($stream) {
         $newStream = @stream_socket_accept($stream);
         stream_set_blocking($newStream, false);
 
-        // 切换上下文,等到流可读的时候切换回当前上下文
-        yield Ant\Coroutine\waitForRead($newStream);
-        echo fread($newStream, 8192);
+        try {
+            // 切换上下文,等到流读完时切换回当前上下文
+            echo (yield \Ant\Coroutine\IOCall::read($newStream, 8192));
 
-        // 支持数组,迭代器
-        // 沉睡150ms后,切换上下文,等到流可写的时候切换回当前上下文
-        yield [
-            Ant\Coroutine\sleep(0.05),
-            Ant\Coroutine\sleep(0.15),
-        ];
+            // 沉睡50ms后
+            yield Ant\Coroutine\sleep(0.05);
 
-        yield Ant\Coroutine\waitForWrite($newStream);
-        fwrite($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
-
-        // 断开连接
-        fclose($newStream);
+            // 切换上下文,写入完成后,切换回当前上下文
+            yield \Ant\Coroutine\IOCall::write($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+        } catch (\Exception $e) {
+            var_dump($e->getMessage());
+        } finally {
+            // 断开连接
+            fclose($newStream);
+        }
     });
 });
 ```
