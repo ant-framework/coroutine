@@ -52,11 +52,20 @@ class Task
 
     /**
      * Task constructor.
-     * @param \Generator $coroutine
+     * @param LoopInterface $loop
+     * @param callable|\Generator $coroutine
      * @param int $taskId
      */
-    public function __construct(\Generator $coroutine, LoopInterface $loop, $taskId = 0)
+    public function __construct(LoopInterface $loop, $coroutine, $taskId = 0)
     {
+        if (is_callable($coroutine)) {
+            $coroutine = call_user_func($coroutine);
+        }
+
+        if (!$coroutine instanceof \Generator) {
+            throw new \InvalidArgumentException;
+        }
+
         $this->coroutine = $coroutine;
         $this->loop = $loop;
         $this->taskId = $taskId;
@@ -82,7 +91,7 @@ class Task
                         case Signal::TASK_SLEEP:
                         case Signal::TASK_KILLED:
                         case Signal::TASK_WAIT:
-                            return null;
+                        return;
                             break;
                     }
                 }
