@@ -225,13 +225,16 @@ function waitTask(array $taskList)
         $completed = 0;
 
         foreach ($taskList as $coroutine) {
-            if (!$coroutine instanceof \Generator) {
-                throw new \InvalidArgumentException;
-            }
-
-            Task::start(function () use ($coroutine, $taskCount, &$completed, $task) {
+            // 新建任务
+            Task::start(function () use (
+                $coroutine,
+                $taskCount,
+                &$completed,
+                $task
+            ) {
                 yield $coroutine;
 
+                // 查看任务完成数
                 if (++$completed === $taskCount) {
                     $task->resume();
                 }
