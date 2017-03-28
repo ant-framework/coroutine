@@ -110,8 +110,7 @@ function waitForRead($stream)
         addReadStream($stream, function ($stream) use ($task) {
             // IO完成后,不再触发协程上下文切换
             removeReadStream($stream);
-            $task->reenter();
-            $task->run();
+            $task->resume();
         });
 
         return Signal::TASK_WAIT;
@@ -130,8 +129,7 @@ function waitForWrite($stream)
         addWriteStream($stream, function ($stream) use ($task) {
             // IO完成后,不再触发协程上下文切换
             removeWriteStream($stream);
-            $task->reenter();
-            $task->run();
+            $task->resume();
         });
 
         return Signal::TASK_WAIT;
@@ -148,9 +146,7 @@ function sleep($time)
 {
     return new SysCall(function (Task $task) use ($time) {
         addTimer($time, function () use ($task) {
-            // 继续Task,栈结构得到保存
-            $task->reenter();
-            $task->run();
+            $task->resume();
         });
 
         return Signal::TASK_SLEEP;
@@ -192,5 +188,56 @@ function getTask()
     return new SysCall(function (Task $task) {
         $task->setReenterValue($task);
         return Signal::TASK_CONTINUE;
+    });
+}
+
+/**
+ * 新建任务
+ *
+ * @param array $taskList
+ * @return SysCall
+ */
+function newTask(array $taskList)
+{
+    return new SysCall(function () use ($taskList) {
+        foreach ($taskList as $coroutine) {
+            if (!$coroutine instanceof \Generator) {
+                throw new \InvalidArgumentException;
+            }
+
+            Task::start($coroutine);
+        }
+
+        return Signal::TASK_CONTINUE;
+    });
+}
+
+/**
+ * 等待任务完成
+ *
+ * @param array $taskList
+ * @return SysCall
+ */
+function waitTask(array $taskList)
+{
+    return new SysCall(function (Task $task) use ($taskList) {
+        $taskCount = count($taskList);
+        $completed = 0;
+
+        foreach ($taskList as $coroutine) {
+            if (!$coroutine instanceof \Generator) {
+                throw new \InvalidArgumentException;
+            }
+
+            Task::start(function () use ($coroutine, $taskCount, &$completed, $task) {
+                yield $coroutine;
+
+                if (++$completed === $taskCount) {
+                    $task->resume();
+                }
+            });
+        }
+
+        return Signal::TASK_WAIT;
     });
 }

@@ -4,6 +4,7 @@ namespace Ant\Coroutine;
 use SplStack;
 
 /**
+ * Todo 避免重返入栈
  * 协程调度器
  *
  * Class Scheduler
@@ -95,17 +96,28 @@ class Scheduler
     {
         $yieldValue = $coroutine->current();
 
-        if (is_array($yieldValue) || $yieldValue instanceof \Iterator) {
-            $yieldValue = $this->convertToGenerator($yieldValue);
-        }
-
         if (!$yieldValue instanceof \Generator) {
-            return $yieldValue;
+            if (!$this->isIterable($yieldValue)) {
+                return $yieldValue;
+            }
+
+            $yieldValue = $this->convertToGenerator($yieldValue);
         }
         // 入栈
         $this->stack->push($this->task->getCoroutine());
         $this->task->setCoroutine($yieldValue);
         return $this->handleYieldValue($yieldValue);
+    }
+
+    /**
+     * 是否时可迭代类型
+     *
+     * @param $value
+     * @return bool
+     */
+    protected function isIterable($value)
+    {
+        return is_array($value) || $value instanceof \Iterator;
     }
 
     /**

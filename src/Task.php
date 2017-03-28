@@ -98,10 +98,23 @@ class Task
                             break;
                     }
                 }
-            } catch (\Exception $e) {
-                $this->scheduler->tryCatch($e);
+            } catch (\Exception $exception) {
+                $this->scheduler->tryCatch($exception);
             }
         }
+    }
+
+    /**
+     * 恢复任务
+     *
+     * @param null $value
+     */
+    public function resume($value = null)
+    {
+        // 继续Task,栈结构得到保存
+        $this->setReenterValue($value);
+        $this->reenter();
+        $this->run();
     }
 
     /**

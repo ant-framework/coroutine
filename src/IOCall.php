@@ -2,6 +2,10 @@
 namespace Ant\Coroutine;
 
 
+/**
+ * Class IOCall
+ * @package Ant\Coroutine
+ */
 class IOCall
 {
     /**
@@ -23,9 +27,7 @@ class IOCall
                 }
 
                 GlobalLoop::removeWriteStream($stream);
-                $task->setReenterValue($sent);
-                $task->reenter();
-                $task->run();
+                $task->resume($sent);
             });
 
             return Signal::TASK_WAIT;
@@ -51,9 +53,7 @@ class IOCall
                 }
 
                 GlobalLoop::removeReadStream($stream);
-                $task->setReenterValue($chunk);
-                $task->reenter();
-                $task->run();
+                $task->resume($chunk);
             });
 
             return Signal::TASK_WAIT;
