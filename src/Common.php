@@ -194,19 +194,17 @@ function getTask()
 /**
  * 新建任务
  *
- * @param array $taskList
+ * @param array|\Generator|callable $task
  * @return SysCall
  */
-function newTask(array $taskList)
+function newTask($coroutine)
 {
-    return new SysCall(function () use ($taskList) {
-        foreach ($taskList as $coroutine) {
-            if (!$coroutine instanceof \Generator) {
-                throw new \InvalidArgumentException;
-            }
-
-            Task::start($coroutine);
+    return new SysCall(function () use ($coroutine) {
+        if (!$coroutine instanceof \Generator) {
+            throw new \InvalidArgumentException;
         }
+
+        Task::start($coroutine);
 
         return Signal::TASK_CONTINUE;
     });
@@ -220,6 +218,7 @@ function newTask(array $taskList)
  */
 function waitTask(array $taskList)
 {
+    // Todo 利用ReactPhp.Promise完成
     return new SysCall(function (Task $task) use ($taskList) {
         $taskCount = count($taskList);
         $completed = 0;

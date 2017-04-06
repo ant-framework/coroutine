@@ -87,14 +87,15 @@ class Task
                 $signal = $this->scheduler->schedule();
                 if (Signal::isSignal($signal)) {
                     $this->signal = $signal;
+                    // 根据不同信号进行处理
                     switch ($this->signal) {
                         case Signal::TASK_CONTINUE:
                             $this->reenter();
                             break;
                         case Signal::TASK_SLEEP:
-                        case Signal::TASK_KILLED:
                         case Signal::TASK_WAIT:
-                        return;
+                            // 暂停任务,进入等待状态
+                            return;
                             break;
                     }
                 }
@@ -111,10 +112,13 @@ class Task
      */
     public function resume($value = null)
     {
-        // 继续Task,栈结构得到保存
-        $this->setReenterValue($value);
-        $this->reenter();
-        $this->run();
+        // 如果任务仍在运行,无法恢复任务
+        if (!in_array($this->signal, [Signal::TASK_CONTINUE, Signal::TASK_RUNNING])) {
+            // 继续Task,恢复栈结构
+            $this->setReenterValue($value);
+            $this->reenter();
+            $this->run();
+        }
     }
 
     /**

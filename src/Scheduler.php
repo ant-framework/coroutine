@@ -117,6 +117,7 @@ class Scheduler
      */
     protected function isIterable($value)
     {
+        // PHP7.1加入Iterable类型(可迭代类型)
         return is_array($value) || $value instanceof \Iterator;
     }
 
@@ -128,6 +129,7 @@ class Scheduler
      */
     protected function convertToGenerator($yieldValue)
     {
+        // 因为是,数组,迭代器,不会处理重入协程的值
         foreach ($yieldValue as $value) {
             yield $value;
         }
