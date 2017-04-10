@@ -65,13 +65,13 @@ Ant\Coroutine\GlobalLoop::addReadStream($serverSocket, function ($stream) {
 
         try {
             // 切换上下文,等到流读完时切换回当前上下文
-            echo (yield \Ant\Coroutine\IOCall::read($newStream, 8192));
+            echo (yield \Ant\Coroutine\asyncRead($newStream, 8192));
 
             // 沉睡50ms后
             yield Ant\Coroutine\sleep(0.05);
 
             // 切换上下文,写入完成后,切换回当前上下文
-            yield \Ant\Coroutine\IOCall::write($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
+            yield \Ant\Coroutine\asyncWrite($newStream, "HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello world");
         } catch (\Exception $e) {
             var_dump($e->getMessage());
         } finally {

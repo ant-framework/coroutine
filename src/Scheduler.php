@@ -4,7 +4,6 @@ namespace Ant\Coroutine;
 use SplStack;
 
 /**
- * Todo 避免重返入栈
  * 协程调度器
  *
  * Class Scheduler
@@ -16,6 +15,13 @@ class Scheduler
      * @var Task
      */
     protected $task;
+
+    /**
+     * 是否是第一次入栈
+     *
+     * @var bool
+     */
+    protected $isFirst = true;
 
     /**
      * @var SplStack
@@ -46,6 +52,7 @@ class Scheduler
         $yieldValue = $this->handleYieldValue($coroutine);
 
         if ($yieldValue instanceof SysCall) {
+            // 系统调用
             return call_user_func($yieldValue, $this->task);
         }
 
@@ -72,8 +79,9 @@ class Scheduler
      */
     public function tryCatch(\Exception $exception)
     {
-        // 如果已是最后一层栈时,不去再去捕获异常
         if ($this->stack->isEmpty()) {
+            // 如果栈中的协程函数无法处理异常
+            // 就将此异常抛出,交给上级应用程序处理
             throw $exception;
         }
 
@@ -101,10 +109,18 @@ class Scheduler
                 return $yieldValue;
             }
 
+            // 如果是可迭代格式,将其转换为协程函数
             $yieldValue = $this->convertToGenerator($yieldValue);
         }
-        // 入栈
-        $this->stack->push($this->task->getCoroutine());
+
+        if ($this->isFirst) {
+            // 第一次堆栈不入栈,避免重复入栈
+            $this->isFirst = false;
+        } else {
+            // 入栈
+            $this->stack->push($this->task->getCoroutine());
+        }
+
         $this->task->setCoroutine($yieldValue);
         return $this->handleYieldValue($yieldValue);
     }
@@ -129,8 +145,10 @@ class Scheduler
      */
     protected function convertToGenerator($yieldValue)
     {
-        // 因为是,数组,迭代器,不会处理重入协程的值
         foreach ($yieldValue as $value) {
+            // 因为数组,迭代器,不会处理重入协程的值
+            // 所以可以直接将其转换为迭代器
+            // 而不需要去处理重入协程函数的值
             yield $value;
         }
     }

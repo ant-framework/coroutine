@@ -192,6 +192,85 @@ function getTask()
 }
 
 /**
+ * 异步读取流指定长度的数据
+ *
+ * @param resource $stream
+ * @param int $length
+ * @return AsyncCall
+ */
+function asyncRead($stream, $length)
+{
+    return new AsyncCall(function (Task $task) use ($stream, $length) {
+        GlobalLoop::addReadStream($stream, function ($stream) use ($task, $length) {
+            $chunk = fread($stream, $length);
+
+            if ($chunk === '' || $chunk === false) {
+                GlobalLoop::removeReadStream($stream);
+                $error = __createLastError("Read failed");
+                $task->throwException($error);
+                return;
+            }
+
+            GlobalLoop::removeReadStream($stream);
+            $task->resume($chunk);
+        });
+
+        return Signal::TASK_WAIT;
+    });
+}
+
+/**
+ * 异步写入到一个流
+ *
+ * @param resource $stream
+ * @param string $buffer
+ * @return AsyncCall
+ */
+function asyncWrite($stream, $buffer)
+{
+    return new AsyncCall(function (Task $task) use ($stream, $buffer) {
+        GlobalLoop::addWriteStream($stream, function ($stream) use ($task, $buffer) {
+            $sent = @fwrite($stream, $buffer);
+
+            if ($sent === 0 || $sent === false) {
+                GlobalLoop::removeWriteStream($stream);
+                $error = __createLastError("Send failed");
+                $task->throwException($error);
+                return;
+            }
+
+            GlobalLoop::removeWriteStream($stream);
+            $task->resume($sent);
+        });
+
+        return Signal::TASK_WAIT;
+    });
+}
+
+/**
+ * 获取最后一个错误
+ *
+ * @param string $defaultMessage
+ * @return \ErrorException|\RuntimeException
+ */
+function __createLastError($defaultMessage = '')
+{
+    $error = error_get_last();
+
+    if ($error === null) {
+        return new \RuntimeException($defaultMessage);
+    }
+
+    return new \ErrorException(
+        $error['message'],
+        0,
+        $error['type'],
+        $error['file'],
+        $error['line']
+    );
+}
+
+/**
  * 新建任务
  *
  * @param array|\Generator|callable $task
