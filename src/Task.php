@@ -84,20 +84,18 @@ class Task
     {
         while ($this->signal !== Signal::TASK_DONE) {
             try {
-                $signal = $this->scheduler->schedule();
-                if (Signal::isSignal($signal)) {
-                    $this->signal = $signal;
-                    // 根据不同信号进行处理
-                    switch ($this->signal) {
-                        case Signal::TASK_CONTINUE:
-                            $this->reenter();
-                            break;
-                        case Signal::TASK_SLEEP:
-                        case Signal::TASK_WAIT:
-                            // 暂停任务,进入等待状态
-                            return;
-                            break;
-                    }
+                $this->signal = $this->scheduler->schedule();
+
+                // 根据不同信号进行处理
+                switch ($this->signal) {
+                    case Signal::TASK_CONTINUE:
+                        $this->reenter();
+                        break;
+                    case Signal::TASK_SLEEP:
+                    case Signal::TASK_WAIT:
+                        // 暂停任务,进入等待状态
+                        return;
+                        break;
                 }
             } catch (\Exception $exception) {
                 $this->scheduler->tryCatch($exception);

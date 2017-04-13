@@ -53,7 +53,11 @@ class Scheduler
 
         if ($yieldValue instanceof SysCall) {
             // 系统调用
-            return call_user_func($yieldValue, $this->task);
+            $signal = call_user_func($yieldValue, $this->task);
+            // 默认继续任务
+            return Signal::isSignal($signal)
+                ? $signal
+                : Signal::TASK_CONTINUE;
         }
 
         if ($coroutine->valid()) {
