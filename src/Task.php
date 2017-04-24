@@ -3,6 +3,7 @@ namespace Ant\Coroutine;
 
 /**
  * Todo: 单元测试
+ * Todo: 添加Task id属性,通过ID控制不同任务的流程
  *
  * 协程堆栈
  *
@@ -11,13 +12,6 @@ namespace Ant\Coroutine;
  */
 class Task
 {
-    /**
-     * 任务ID
-     *
-     * @var int
-     */
-    protected $taskId = 0;
-
     /**
      * 当前协程任务
      *
@@ -50,28 +44,26 @@ class Task
      * 尝试启动协程
      *
      * @param $coroutine
-     * @param int $taskId
+     * @param $args
      */
-    public static function start($coroutine, $taskId = 0)
+    public static function start($coroutine, $args = [])
     {
         if (is_callable($coroutine)) {
-            $coroutine = call_user_func($coroutine);
+            $coroutine = call_user_func_array($coroutine, $args);
         }
 
         if ($coroutine instanceof \Generator) {
-            (new static($coroutine, $taskId))->run();
+            (new static($coroutine))->run();
         }
     }
 
     /**
      * Task constructor.
      * @param \Generator $coroutine
-     * @param int $taskId
      */
-    public function __construct(\Generator $coroutine, $taskId = 0)
+    public function __construct(\Generator $coroutine)
     {
         $this->coroutine = $coroutine;
-        $this->taskId = $taskId;
         $this->scheduler = new Scheduler($this);
     }
 
@@ -95,7 +87,6 @@ class Task
                     case Signal::TASK_WAIT:
                         // 暂停任务,进入等待状态
                         return;
-                        break;
                 }
             } catch (\Exception $exception) {
                 $this->scheduler->tryCatch($exception);
@@ -173,16 +164,6 @@ class Task
     public function setCoroutine(\Generator $coroutine)
     {
         $this->coroutine = $coroutine;
-    }
-
-    /**
-     * 获取当前任务ID
-     *
-     * @return int
-     */
-    public function getTaskId()
-    {
-        return $this->taskId;
     }
 
     /**
