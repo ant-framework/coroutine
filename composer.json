@@ -1,6 +1,6 @@
 {
   "name": "ant-framework/coroutine",
-  "keywords": ["coroutine", "PHP" , "reactphp", "async"],
+  "keywords": ["coroutine", "PHP" , "ReactPhp", "Async"],
   "license": "MIT",
   "type": "library",
   "require": {

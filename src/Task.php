@@ -46,7 +46,7 @@ class Task
      * @param $coroutine
      * @param $args
      */
-    public static function start($coroutine, $args = [])
+    public static function createFrom($coroutine, $args = [])
     {
         if (is_callable($coroutine)) {
             $coroutine = call_user_func_array($coroutine, $args);

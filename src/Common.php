@@ -283,7 +283,7 @@ function newTask($coroutine)
             throw new \InvalidArgumentException;
         }
 
-        Task::start($coroutine);
+        Task::createFrom($coroutine);
 
         return Signal::TASK_CONTINUE;
     });
@@ -304,7 +304,7 @@ function waitTask(array $taskList)
 
         foreach ($taskList as $coroutine) {
             // 新建任务
-            Task::start(function () use (
+            Task::createFrom(function () use (
                 $coroutine,
                 $taskCount,
                 &$completed,
