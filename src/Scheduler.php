@@ -36,7 +36,7 @@ class Scheduler
     {
         $this->task = $task;
         $this->stack = new SplStack();
-        // 加入栈
+        // 入栈
         $this->stack->push($task->getCoroutine());
     }
 
@@ -78,10 +78,10 @@ class Scheduler
     /**
      * 捕获异常
      *
-     * @param \Exception $exception
-     * @throws \Exception
+     * @param \Throwable $exception
+     * @throws \Throwable
      */
-    public function tryCatch(\Exception $exception)
+    public function tryCatch($exception)
     {
         if ($this->stack->isEmpty()) {
             // 如果栈中的协程函数无法处理异常
@@ -118,7 +118,7 @@ class Scheduler
         }
 
         if ($this->isFirst) {
-            // 第一次堆栈不入栈,避免重复入栈
+            // 第一次不入栈,避免重复入栈
             $this->isFirst = false;
         } else {
             // 入栈

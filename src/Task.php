@@ -41,12 +41,13 @@ class Task
     protected $signal = 0;
 
     /**
-     * 尝试启动协程
+     * 启动一个任务
      *
      * @param $coroutine
-     * @param $args
+     * @param array $args
+     * @return static
      */
-    public static function createFrom($coroutine, $args = [])
+    public static function start($coroutine, $args = [])
     {
         if (is_callable($coroutine)) {
             $coroutine = call_user_func_array($coroutine, $args);
@@ -138,10 +139,10 @@ class Task
     }
 
     /**
-     * @param \Exception $exception
+     * @param \Throwable $exception
      * @throws \Exception
      */
-    public function throwException(\Exception $exception)
+    public function throwException($exception)
     {
         $this->scheduler->tryCatch($exception);
     }
